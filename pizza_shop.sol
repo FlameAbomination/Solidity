@@ -47,7 +47,7 @@ contract PizzaShop {
         // Применение скидки на основе бонусных баллов
         while (bonusPoints[msg.sender] >= 10) {
             bonusPoints[msg.sender] -= 10;
-            totalCost -= 1 ether;
+            totalCost -= 1;
         }
         pizzaCart[msg.sender].push(menu[_index]);
         setPizzaOwner(_index, msg.sender);
