@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract PizzaShop {
     // адрес владельца пиццерии
     address public owner; 
-
+    // токен ERC20
+    ERC20 public loyaltyToken;
     // история заказов покупателя
     mapping(address => Pizza[]) public orderHistory;
     // бонусные баллы покупателя
@@ -33,7 +35,7 @@ contract PizzaShop {
 
     constructor(address own) {
         owner = own;
-        
+        loyaltyToken = new LoyaltyToken();
         menu.push(Pizza("Margherita", 10, owner));
         menu.push(Pizza("Pepperoni",  12, owner));
         menu.push(Pizza("Vegetarian", 11, owner));
@@ -47,6 +49,7 @@ contract PizzaShop {
         // Применение скидки на основе бонусных баллов
         while (bonusPoints[msg.sender] >= 10) {
             bonusPoints[msg.sender] -= 10;
+            loyaltyToken.transferFrom(msg.sender, address(this), 10);
             totalCost -= 1;
         }
         pizzaCart[msg.sender].push(menu[_index]);
@@ -77,7 +80,7 @@ contract PizzaShop {
 
         // добавление бонусных баллов на аккаунт клиента
         bonusPoints[msg.sender] += cartCost[msg.sender] / 10;
-
+        loyaltyToken.transfer(msg.sender, bonusPoints[msg.sender]);
         // проверка количества заказов клиента (если заказов 10 - бесплатная пицца, если 5 - скидка 10%)
         if ((orderHistory[msg.sender].length % 10 == 0) && (orderHistory[msg.sender].length != 0)) {
             emit Reward(msg.sender, "Free pizza!");
@@ -135,5 +138,14 @@ contract PizzaShop {
     
     function getOwner() public view returns (address) {
         return owner;
+    }
+
+    function getTokenBalance(address _address) public view returns (uint256) {
+        return loyaltyToken.balanceOf(_address);
+    }
+}
+contract LoyaltyToken is ERC20 {
+    constructor() ERC20("Pizza Loyalty Token", "PLT") {
+        _mint(msg.sender, 1000000000000000000000000); // инициализация 1 млрд токенов
     }
 }
